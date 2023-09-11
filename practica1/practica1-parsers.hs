@@ -247,7 +247,7 @@ Basetype -> DInt | DChar | DFloat
 
 
 data Hasktype2 = Basetype | Fun Hasktype2 Hasktype2
-
+-- data Basetype = DInt | DChar | DFloat --Ya esta declarado arriba
 haskType :: Parser Hasktype2
 haskType = do  t <- type5
                (do      space
