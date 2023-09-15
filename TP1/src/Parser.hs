@@ -46,15 +46,15 @@ lis = makeTokenParser
 -----------------------------------
 
 intexp :: Parser (Exp Int)
-intexp = try (eqexpr) <|> intexp'  
+intexp =  eqexpr <|> intexp'  
 
 eqexpr :: Parser (Exp Int)
-eqexpr = do v <- identifier lis
-            reservedOp lis "=" 
-            y <- intexp 
-            reservedOp lis ","
-            z <- intexp
-            return (ESeq (EAssgn v y) z)
+eqexpr = try (do  v <- identifier lis
+                  reservedOp lis "=" 
+                  y <- intexp 
+                  reservedOp lis ","
+                  z <- intexp
+                  return (ESeq (EAssgn v y) z) )
 
 intexp' :: Parser (Exp Int)
 intexp' = chainl1 factor addsub
