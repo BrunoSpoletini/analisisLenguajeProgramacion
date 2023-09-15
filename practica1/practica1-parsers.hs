@@ -258,3 +258,42 @@ haskType = do  t <- type5
                         <|> (return (t::Hasktype2))) -- t es tipo Basetype, que es un componente de Hasktype2, la vdd no se pq no anda ni como fixearlo
 
 -- EJERCICIO 8 --
+-- El problema de la recursion a izq es que no termina nunca:
+-- expr -> expr (..) queda en un loop infinito
+{-
+Gramatica: CON RECURSION A IZQ
+expr -> expre ('+' term | '-' term) | term
+term -> term ('*' factor | '/' factor) | factor
+factor -> digit | '(' expr ')'
+digit -> '0' | '1' | · · · | '9'
+
+Gramatica: SIN RECURSION A IZQ
+expr -> term expr'
+expr' -> e | ('+' term | '-' term) expr'
+term -> factor term'
+term' -> e | ('*' factor | '/' factor) term'
+factor -> digit | '(' expr ')'
+digit -> '0' | '1' | · · · | '9'
+
+-}
+
+-- x-(y-z) -> mal
+-- (x-y)-z -> bien
+-- 8 - 2 - 1 -> 5
+-- HECHO EN CLASE
+expr :: Parser Int
+expr = do       t <- term
+                f <- expr'
+                return (f t)
+
+expr' :: Parser (Int -> Int)
+expr' = do      char '+'
+                t <- term
+                f <- expr'
+                return ( \x -> f(x + t) )
+                <|>     (do char '-'
+                        t <- term
+                        f <- expr'
+                        return ( \x -> f(x - t) )
+                        <|> return (\x -> x))
+

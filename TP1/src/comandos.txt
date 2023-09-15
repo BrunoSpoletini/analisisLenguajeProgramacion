@@ -1,0 +1,9 @@
+stack build && stack exec .stack-work/dist/x86_64-linux-tinfo6/Cabal-3.0.1.0/build/TP1-exe/TP1-exe -- Ejemplos/div.lis -a
+
+ -p : Imprimir el programa de entrada.
+ -a : Mostrar el AST del programa de entrada.
+ -e N_EVALUADOR : Elegir evaluador 1, 2 o 3 (1 por defecto).
+ -h : Imprimir ayuda
+
+
+ https://hackage.haskell.org/package/parsec-3.1.16.1/docs/Text-Parsec-Combinator.html
