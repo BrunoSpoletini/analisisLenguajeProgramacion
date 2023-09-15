@@ -1,4 +1,5 @@
 x = 0;
+z = x = 7 , j = 100, y = j + x, x + y;
 repeat {
   x = x + 1
 } until (x > 700)

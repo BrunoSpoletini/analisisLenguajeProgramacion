@@ -1,4 +1,7 @@
-stack build && stack exec .stack-work/dist/x86_64-linux-tinfo6/Cabal-3.0.1.0/build/TP1-exe/TP1-exe -- Ejemplos/div.lis -a
+stack build && stack exec .stack-work/dist/x86_64-linux-tinfo6/Cabal-3.0.1.0/build/TP1-exe/TP1-exe -- Ejemplos/div.lis
+
+
+stack build && stack exec .stack-work/dist/x86_64-linux-tinfo6/Cabal-3.0.1.0/build/TP1-exe/TP1-exe -- Ejemplos/div.lis -e 1
 
  -p : Imprimir el programa de entrada.
  -a : Mostrar el AST del programa de entrada.
