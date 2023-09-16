@@ -74,5 +74,5 @@ evalAss (EAssgn a b) s = let res :!: s' = evalExp b s
 
 opera:: Exp a -> Exp b -> State -> (a -> b -> c) -> Pair c State
 opera e1 e2 s f = let e1' :!: s' = (evalExp e1 s)
-                      in (let e2' :!: s'' = (evalExp e2 s') 
-                          in (f e1' e2') :!: s'' )
+                      e2' :!: s'' = (evalExp e2 s') 
+                  in (f e1' e2') :!: s''
