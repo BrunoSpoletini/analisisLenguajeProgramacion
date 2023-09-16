@@ -14,22 +14,24 @@ type State = (M.Map Variable Int, String)
 -- Estado nulo
 -- Completar la definición
 initState :: State
-initState = undefined
+initState = (M.empty, [])
 
 -- Busca el valor de una variable en un estado
--- Completar la definición
 lookfor :: Variable -> State -> Either Error Int
-lookfor v s = undefined
+lookfor v (s, str) = case s M.!? v of
+              Nothing -> Left UndefVar
+              Just a -> Right a 
 
 -- Cambia el valor de una variable en un estado
 -- Completar la definición
 update :: Variable -> Int -> State -> State
-update x v = undefined
+update v i (s, stateStr) = let str = "Let " ++ v ++ " = " ++ show i
+                               newS = M.insert v i s
+                           in addTrace str (newS, stateStr)
 
 -- Agrega una traza dada al estado
--- Completar la definición
 addTrace :: String -> State -> State
-addTrace s = undefined
+addTrace str (state, strOld) = (state, strOld ++ str)
 
 -- Evalua un programa en el estado nulo
 eval :: Comm -> Either Error State
@@ -44,11 +46,65 @@ stepCommStar c    s = do
   stepCommStar c' s'
 
 -- Evalua un paso de un comando en un estado dado
--- Completar la definición
 stepComm :: Comm -> State -> Either Error (Pair Comm State)
-stepComm = undefined
+stepComm Skip s = Right (Skip :!: s)
+stepComm (Let v i) s = case (evalExp i s) of
+                            Left l -> Left l
+                            Right (n:!: s') -> Right (Skip :!: update v n s')
+stepComm (Seq Skip c2) s = Right (c2 :!: s)
+stepComm (Seq c1 c2) s = case (stepComm c1 s) of
+                              Left l -> Left l
+                              Right (c1':!: s') -> Right ((Seq c1' c2) :!: s')
+stepComm (IfThenElse b c1 c2) s = case (evalExp b s) of
+                                       Left l -> Left l
+                                       Right (r:!: s') -> if r then Right(c1 :!: s') else Right(c2 :!: s')
+stepComm (Repeat c b) s = case (evalExp b s) of
+                              Left l -> Left l
+                              Right (r:!: s') -> Right((Seq c (IfThenElse b Skip (Repeat c b))) :!: s) 
+
 
 -- Evalua una expresion
--- Completar la definición
 evalExp :: Exp a -> State -> Either Error (Pair a State)
-evalExp = undefined
+evalExp (Const x) s = Right (x :!: s)
+evalExp (Var v) s =case (lookfor v s)  of 
+                         Left l -> Left l
+                         Right r -> Right (r :!: s)
+evalExp (UMinus e) s = case (evalExp e s) of
+                            Left l -> Left l
+                            Right (r :!: s')  -> Right  (-r :!: s')
+evalExp (Plus e1 e2) s = opera e1 e2 s (+)
+evalExp (Minus e1 e2) s = opera e1 e2 s (-)
+evalExp (Times e1 e2) s = opera e1 e2 s (*)
+evalExp (Div e1 e2) s = case (evalExp e1 s) of
+                             Left l -> Left l
+                             Right (n :!: s') -> case (evalExp e2 s') of
+                                                      Left l -> Left l
+                                                      Right (n2 :!: s'') -> if n2 == 0 then Left DivByZero else Right ((div n n2) :!: s'')
+evalExp BTrue s = Right (True :!: s)
+evalExp BFalse s = Right (False :!: s)
+evalExp (Lt e1 e2) s = opera e1 e2 s (<)
+evalExp (Gt e1 e2) s = opera e1 e2 s (>)
+evalExp (And b1 b2) s = opera b1 b2 s (&&)
+evalExp (Or b1 b2) s = opera b1 b2 s (||)
+evalExp (Not b1) s = case (evalExp b1 s) of
+                            Left l -> Left l
+                            Right (r :!: s')  -> Right  ((not r) :!: s')
+evalExp (Eq e1 e2) s = opera e1 e2 s (==)
+evalExp (NEq e1 e2) s = opera e1 e2 s (/=)
+evalExp (ESeq a b) s = case (evalAss a s) of
+                             Left l -> Left l
+                             Right s' -> evalExp b s'
+
+evalAss :: Exp a -> State -> Either Error State
+evalAss (EAssgn a b) s = case (evalExp b s) of
+                               Left l -> Left l
+                               Right (res :!: s') -> Right (update a res s')
+
+
+opera:: Exp a -> Exp b -> State -> (a -> b -> c) -> Either Error (Pair c State)
+opera e1 e2 s f = case (evalExp e1 s) of
+                        Left l -> Left l
+                        Right (e1' :!: s') -> case (evalExp e2 s') of
+                                                    Left l -> Left l
+                                                    Right (e2' :!: s'') -> Right((f e1' e2') :!: s'')
+                    
