@@ -10,3 +10,12 @@ stack build && stack exec .stack-work/dist/x86_64-linux-tinfo6/Cabal-3.0.1.0/bui
 
 
  https://hackage.haskell.org/package/parsec-3.1.16.1/docs/Text-Parsec-Combinator.html
+
+-- :load ./Ejemplos/Divisores.lam
+
+def uno = suc (zero)
+def dos = suc (suc (zero))
+def tres = suc (suc (suc (zero)))
+def cuatro = suc (suc (suc (suc (zero))))
+def cinco = suc (suc (suc (suc (suc zero))))
+def diez = suc (suc (suc (suc (suc (suc (suc (suc (suc (suc (zero))))))))))

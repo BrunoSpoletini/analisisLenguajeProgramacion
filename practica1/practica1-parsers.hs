@@ -56,7 +56,7 @@ A' -> e | aA'
 
 -}
 
--- Con recursion a izquierda y asociando a derecha
+-- asociando a derecha
 -- expr :: Parser Int
 -- expr =  do  t <- term
 --             (do char '+'
