@@ -22,16 +22,31 @@ import Data.Char
     '('     { TOpen }
     ')'     { TClose }
     '->'    { TArrow }
+    ','     { TComa }
     VAR     { TVar $$ }
     TYPEE   { TTypeE }
     DEF     { TDef }
-    
+    LET     { TLet }
+    IN      { TIn }
+    UNIT    { TUnitT }
+    UNITV   { TUnit }
+    FST     { TFst }
+    SND     { TSnd }
+    ZERO    { TZero }
+    SUC     { TSuc }
+    NAT     { TNat }
+    REC     { TRec }
+
+
+
 
 %right VAR
 %left '=' 
 %right '->'
-%right '\\' '.' 
-
+%right FST SND
+%right SUC
+%right REC 
+%right '\\' '.' LET 
 %%
 
 Def     :  Defexp                      { $1 }
@@ -40,8 +55,14 @@ Defexp  : DEF VAR '=' Exp              { Def $2 $4 }
 
 Exp     :: { LamTerm }
         : '\\' VAR ':' Type '.' Exp    { LAbs $2 $4 $6 }
+        | LET VAR '=' Exp IN Exp       { LLet $2 $4 $6 }
         | NAbs                         { $1 }
-        
+        | FST Exp                      { LFst $2 }
+        | SND Exp                      { LSnd $2 }
+        | '(' Exp ',' Exp ')'          { LPair $2 $4 }
+        | SUC Exp                      { LSuc $2 }
+        | REC Atom Atom Exp            { LRec $2 $3 $4 }
+
 NAbs    :: { LamTerm }
         : NAbs Atom                    { LApp $1 $2 }
         | Atom                         { $1 }
@@ -49,10 +70,15 @@ NAbs    :: { LamTerm }
 Atom    :: { LamTerm }
         : VAR                          { LVar $1 }  
         | '(' Exp ')'                  { $2 }
+        | UNITV                        { LUnit }
+        | ZERO                         {LZero}  
 
 Type    : TYPEE                        { EmptyT }
         | Type '->' Type               { FunT $1 $3 }
         | '(' Type ')'                 { $2 }
+        | UNIT                         { UnitT}
+        | '(' Type ',' Type ')'        { PairT $2 $4 }
+        | NAT                          { NatT }
 
 Defs    : Defexp Defs                  { $1 : $2 }
         |                              { [] }
@@ -90,12 +116,23 @@ data Token = TVar String
                | TTypeE
                | TDef
                | TAbs
+               | TLet
+               | TIn
                | TDot
                | TOpen
                | TClose 
                | TColon
                | TArrow
+               | TComa
                | TEquals
+               | TUnit
+               | TUnitT
+               | TFst
+               | TSnd
+               | TZero 
+               | TSuc 
+               | TRec 
+               | TNat
                | TEOF
                deriving Show
 
@@ -112,16 +149,26 @@ lexer cont s = case s of
                     ('-':('>':cs)) -> cont TArrow cs
                     ('\\':cs)-> cont TAbs cs
                     ('.':cs) -> cont TDot cs
+                    (',':cs) -> cont TComa cs  
                     ('(':cs) -> cont TOpen cs
                     ('-':('>':cs)) -> cont TArrow cs
                     (')':cs) -> cont TClose cs
                     (':':cs) -> cont TColon cs
                     ('=':cs) -> cont TEquals cs
+                    ('0':cs) -> cont TZero cs
                     unknown -> \line -> Failed $ 
                      "Línea "++(show line)++": No se puede reconocer "++(show $ take 10 unknown)++ "..."
                     where lexVar cs = case span isAlpha cs of
                               ("E",rest)    -> cont TTypeE rest
                               ("def",rest)  -> cont TDef rest
+                              ("let",rest)  -> cont TLet rest
+                              ("in",rest)   -> cont TIn rest
+                              ("unit",rest) -> cont TUnit rest
+                              ("Unit",rest) -> cont TUnitT rest
+                              ("fst",rest) -> cont TFst rest
+                              ("suc",rest) -> cont TSuc rest
+                              ("R",rest)   -> cont TRec rest
+                              ("Nat",rest) -> cont TNat rest
                               (var,rest)    -> cont (TVar var) rest
                           consumirBK anidado cl cont s = case s of
                               ('-':('-':cs)) -> consumirBK anidado cl cont $ dropWhile ((/=) '\n') cs

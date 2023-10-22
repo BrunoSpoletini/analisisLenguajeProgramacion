@@ -1,0 +1,8 @@
+def uno = suc 0
+def dos = suc (suc 0)
+def tres = suc (suc (suc 0))
+def cuatro = suc (suc (suc (suc 0)))
+def cinco = suc (suc (suc (suc (suc 0))))
+def diez = suc (suc (suc (suc (suc (suc (suc (suc (suc (suc 0)))))))))
+
+def ack = \x:Nat.\y:Nat. ( R () (\a:Nat . \b:Nat . ) y   )
