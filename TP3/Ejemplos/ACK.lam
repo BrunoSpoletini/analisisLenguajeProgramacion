@@ -5,4 +5,4 @@ def cuatro = suc (suc (suc (suc 0)))
 def cinco = suc (suc (suc (suc (suc 0))))
 def diez = suc (suc (suc (suc (suc (suc (suc (suc (suc (suc 0)))))))))
 
-def ack = \x:Nat.\y:Nat. ( R () (\a:Nat . \b:Nat . ) y   )
+def ack = \n:Nat. R (\j:Nat. suc j) (\f:Nat->Nat. \y:Nat. \m:Nat . R (f (suc 0)) (\r:Nat. \x:Nat. f r) m) n
