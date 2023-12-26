@@ -1,0 +1,181 @@
+2) Probar progreso y preservacion del lenguaje de expresiones aritmeticas
+
+Seguro = Progreso + preservacion
+
+Propiedad de Progreso:
+Si un termino t está bien tipado, entonces o es un valor,
+o existe un t' / t -> t'
+
+Propiedad de preservacion:
+Si t -> t' y t esta bien tipado, 
+entonces t' esta bien tipado
+(la inversa no vale)
+
+Las propiedades se prueban por induccion sobre la derivacion de t:T
+
+Un termino t se dice bien tipado si existe T tal que t : T
+
+---------------------------------------
+
+1)
+
+newtype Writer w a = Writer {runWriter :: (a, [w])}
+instance Monad (Writer w) where
+    return a = Writer (a,[])
+    (Writer (a, w)) >>= f = let (a', w') = runWriter (f a)
+                                in Writer (a', w ++ w')
+
+-- a) Probar writer w es una monada
+
+(monad.1): return x >>= f = f x
+
+(monad.2): m >>= return = m
+
+(monad.3): (m >>= f) >>= g = m >>= (\k -> f k >>= g )
+
+Dem (monad.1):
+return x >>= f = <def ret>
+
+Writer (x, []) >>= f = <def >>=>
+
+let (x', w') = runWriter (f x)
+    in Writer (x', [] ++ w') = <elem neutro de ++ y redundancia de let>
+
+Writer (runWriter (f x)) = < aplicacion writer y runWriter >
+
+f x
+
+Dem (monad.2):
+(Writer (a, w) >>= return) = <def >>=>
+
+let (a', w') = runWriter (return a)
+    in Writer (a', w ++ w') = < def ret >
+
+let (a', w') = runWriter (Writer (a, []))
+    in Writer (a', w ++ w') = < app de runWriter>
+
+let (a', w') = (a, [])
+    in Writer (a', w ++ w') = <elim de let>
+
+Writer (a, w ++ []) = < elem neutr de ++>
+
+Writer (a, w) 
+
+Dem (monad.3):
+
+((Writer (a, w)) >>= f) >>= g =
+
+(let (a', w') = runWriter (f a)
+in Writer (a', w ++ w')) >>= g =
+
+
+let (a', w') = runWriter (f a)
+    in let (a'', w'') = runWriter (g  a')
+        in Writer (a'', (w ++ w') ++ w'') =
+
+let (a', w') = runWriter (f a)
+    in let (a'', w'') = runWriter (g  a')
+        in Writer (a'', w ++ (w' ++ w'')) =
+
+let (a', w') = runWriter ( f a >>= g )
+    in Writer (a', w ++ w')
+
+Writer (a, w) >>= (\k -> f k >>= g) 
+
+
+--b)
+newtype WriterMaybe w a = WM {runWM :: (Maybe a, [w])}
+
+instance Monad (WriterMaybe w) where
+    return a = WM (Just a, [])
+    WM (x, w) >>= f = case x of 
+                        Nothing -> WM(Nothing, w)
+                        Just a -> let (x2, w2) = runWM (f a)
+                                    in case x2 of
+                                        Nothing -> WM (Nothing, w++w2)
+                                        Just a2 -> WM (a2, w++w2)
+
+tell :: [w] -> WriterMaybe w ()
+tell ws = WM ((), ws)
+
+fail :: WriterMaybe e a
+fail = WM (Nothing, [])
+
+
+type Rule = String
+
+type Packet = String
+
+data Result = Accepted | Rejected
+
+deriving (Show, Eq)
+
+match :: [Rule] -> Packet -> [(Rule, Result)] -- que suponemos definida
+
+filterPacket :: [Rule] -> Packet -> WriterMaybe Char Packet
+filterPacket rs@(x:xs) p = let ms = match rs p
+                            in if (length ms) == 0 
+                            then 
+                                do  tell "UNMATCHED PACKET " ++ P
+                                    fail
+                                else aux P ms
+
+aux :: Packet -> [(Rule, Result)] -> WriterMaybe Char Packet
+aux P ms = let (ru, res):rs = ms
+            in do
+                tell "MATCHED " ++ P ++ " WITH RULE " ++ ru
+                tell "RULE " ++ res
+                if (eq res "Rejected") then 
+                    do WM (Nothing, "")
+                else 
+                    if rs == [] then
+                        do return P
+                    else
+                        do (aux P rs)
+
+--2)
+Probar que T es un functor
+
+data T a = Uno a | Dos (a, a) | More (a, a) (T a)
+
+
+(functor.1): fmap id x = id x
+Por induccion sobre la estructura
+Casos base:
+
+fmap id (Uno x) =
+Uno (id x) =
+Uno x OK
+
+fmap id (Dos (x, y)) =
+Dos (id x, id y) =
+Dos (x, y) OK
+
+Paso inductivo:
+fmap id (More (x,y) t2)
+Asumimos cierto para t2 (HI)
+fmap id (More (x,y) t2) =
+More (id x, id y) (fmap id t2) = <HI>
+More (x, y) (id t2) =
+More (x, y) t2 OK
+
+(functor.2): fmap (f . g) x = fmap f (fmap g x)
+Por induccion sobre la estructura
+Casos base:
+fmap (f. g) (Uno x) = Uno (f.g x) = Uno (f (g x)) = fmap f (Uno (g x)) = fmap f . fmap g (Uno x)
+-- fmap (f. g) (Dos (x, y)) es análogo
+
+Caso inductivo:
+fmap (f. g) More (x, y) t2
+Asumimos cierto para t2 (HI)
+
+fmap (f. g) More (x, y) t2 =
+More ((f. g) x, (f. g) y) (fmap (f. g) t2) = <HI>
+More ((f. g) x, (f. g) y) (fmap f . fmap g t2) =
+More ((f (g x), (f (g y)) (fmap f . fmap g t2) =
+fmap f (More ((g x), (g y)) (fmap g t2)) =
+fmap f . fmap g (More (x, y) t2) OK
+
+Por lo tanto, T a es un functor
+
+

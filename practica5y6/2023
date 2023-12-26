@@ -1,0 +1,71 @@
+-- 1
+-- a
+instance Functor Pair where
+    fmap f (P (x, y)) = P (f x, f y)
+
+fmap id (P (x, y)) = P (id x, id y) = P (x, y) = id (P (x, y))
+fmap f o fmap g (P (x, y)) = fmap f (fmap g (P (x, y)))
+                            = fmap f (P (g x, g, y))
+                            = P (f (g x), f (g y))
+                            = P (f o g x, f o g y)
+                            = fmap (f o g) (P (x, y))
+
+-- c
+data GenTree a = Gen a [GenTree a]
+
+instance Functor GenTree where
+    fmap f (Gen x xs) = Gen (f x) (map (fmap f) xs)
+
+HI: Supongo que (fmap id = id) se da para todos los elementos de la lista de (Gen x xs)
+
+fmap id (Gen x xs) = Gen (id x) (map (fmap id) xs) = Gen x xs = id (Gen x xs)
+
+fmap f o fmap g (Gen x xs) = fmap f (fmap g (Gen x xs))
+                           = fmap f (Gen (g x) (map (fmap g) xs))
+                           = Gen (f (g x)) (map (fmap f) (map (fmap g) xs))
+                           = Gen ((f o g) x) (map (fmap f (fmap g)) xs)
+                           = Gen ((f o g) x) (map (fmap (f o g)) xs)
+                           = fmap (f o g) (Gen x xs)
+
+-- d
+data Cont a = C ((a -> Int) -> Int)
+
+instance Functor Cont where
+    fmap f (C g) = C (\i -> g (i o f))
+    disahbfksjaF
+    AS'DG
+    ASDFG
+    SDFGDSF
+    gSD
+    FG
+    SDFGDSFFG
+    SDFGDSFFGSD
+    FGSDF
+
+    qed
+
+-- 3
+-- a
+instance Applicative Either e where
+    pure = Right
+    (Right f) <*> (Right x) = Right (f x)
+    _         <*> _         = Left e
+
+-- 4
+-- a
+liftA2 :: Applicate f => (a -> b -> c) -> f a -> f b -> f c
+liftA2 f a b = (pure f) <*> a <*> b
+
+-- 5
+sequenceA :: Applicative f => [f a] -> f [a]
+sequenceA [] = pure []
+sequenceA x:xs = (pure (:)) <*> x <*> sequenceA xs
+
+
+[f a, f b, fc]
+
+sequenceA [f a, f b, f c] = (pure (:)) <*> f a <*> sequenceA [f b]
+                          = f ((:) a) <*> sequenceA [f b]
+                          = f ((:) a) <*> ((pure (:)) f b) <*> pure []
+                          = f ((:) a) <*> f ((:) b) <*> pure []
+                          = f [a, b]

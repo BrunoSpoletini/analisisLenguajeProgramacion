@@ -19,3 +19,6 @@ def tres = suc (suc (suc (zero)))
 def cuatro = suc (suc (suc (suc (zero))))
 def cinco = suc (suc (suc (suc (suc zero))))
 def diez = suc (suc (suc (suc (suc (suc (suc (suc (suc (suc (zero))))))))))
+
+
+stack build && stack exec .stack-work/dist/x86_64-linux-tinfo6/Cabal-3.0.1.0/build/TP3-exe/TP3-exe 
