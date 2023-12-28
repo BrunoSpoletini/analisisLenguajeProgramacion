@@ -56,10 +56,49 @@ stepCommStar c    = stepComm c >>= \c' -> stepCommStar c'
 
 -- Evalua un paso de un comando
 stepComm :: MonadState m => Comm -> m Comm
-stepComm = undefined
+stepComm Skip = return Skip
+stepComm (Let v e) =  do  i <- evalExp e
+                          update v i
+                          return Skip
+stepComm (Seq Skip c2) = return c2
+stepComm (Seq c1 c2) = do c <- stepComm c1
+                          return (Seq c c2)
+stepComm (IfThenElse e c1 c2) = do c <- evalExp e
+                                   if c then
+                                    return c1
+                                   else
+                                    return c2
+stepComm (Repeat c e) = return (Seq c (IfThenElse e Skip (Repeat c b)))
 
 -- Evalua una expresion
 evalExp :: MonadState m => Exp a -> m a
-evalExp = undefined
+evalExp (Const x) = return x
+evalExp (Var v) = lookfor v
+evalExp (UMinus e) = do c <- evalExp e
+                        return (-c)
+evalExp (Plus e1 e2) = opera e1 e2 (+)
+evalExp (Minus e1 e2) = opera e1 e2 (-)
+evalExp (Times e1 e2) = opera e1 e2 (*)
+evalExp (Div e1 e2) = opera e1 e2 div
+evalExp BTrue = return True
+evalExp BFalse = return False
+evalExp (Lt e1 e2) = opera e1 e2 (<)
+evalExp (Gt e1 e2) = opera e1 e2 (>)
+evalExp (And b1 b2) = opera b1 b2 (&&)
+evalExp (Or b1 b2) = opera b1 b2 (||)
+evalExp (Not b1) = do c <- evalExp b1
+                      return (not c)
+evalExp (Eq e1 e2) = opera e1 e2 (==)
+evalExp (NEq e1 e2) = opera e1 e2 (/=)
+evalExp (ESeq a b) = do evalAss a
+                        evalExp b
 
+evalAss :: MonadState m => Exp a -> m ()
+evalAss (EAssgn a b) = do v1 <- evalExp b
+                          update a v1
+
+opera :: MonadState m => Exp a -> Exp b -> (a -> b -> c) -> m c
+opera e1 e2 f = do  v1 <- evalExp e1
+                    v2 <- evalExp e2
+                    return (f v1 v2)
 
