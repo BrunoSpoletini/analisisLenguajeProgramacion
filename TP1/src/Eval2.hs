@@ -7,6 +7,7 @@ where
 import           AST
 import qualified Data.Map.Strict               as M
 import           Data.Strict.Tuple
+import Data.Either (Either(Right))
 
 -- Estados
 type State = M.Map Variable Int
@@ -15,6 +16,12 @@ type State = M.Map Variable Int
 initState :: State
 initState = M.empty
 
+newtype StateError a = StateError {runStateError :: Env -> Either Error (a, Env)}
+
+instance Monad StateError where
+  return x = StateError(\s -> Right(x :!: s))
+  m >>= f = 
+
 -- Busca el valor de una variable en un estado
 lookfor :: Variable -> State -> Either Error Int
 lookfor v s = case s M.!? v of
@@ -22,10 +29,8 @@ lookfor v s = case s M.!? v of
               Just a -> Right a 
 
 -- Cambia el valor de una variable en un estado
-
 update :: Variable -> Int -> State -> State
 update = M.insert
-
 
 -- Evalua un programa en el estado nulo
 eval :: Comm -> Either Error State

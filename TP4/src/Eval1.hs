@@ -68,7 +68,7 @@ stepComm (IfThenElse e c1 c2) = do c <- evalExp e
                                     return c1
                                    else
                                     return c2
-stepComm (Repeat c e) = return (Seq c (IfThenElse e Skip (Repeat c b)))
+stepComm (While e c) = return (Seq c (IfThenElse e (While e c) Skip))
 
 -- Evalua una expresion
 evalExp :: MonadState m => Exp a -> m a
