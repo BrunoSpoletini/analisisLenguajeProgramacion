@@ -12,6 +12,7 @@ import           Data.Strict.Tuple
 import           Control.Monad                  ( liftM
                                                 , ap
                                                 )
+import Data.Either (Either(Right))
 
 -- Entornos
 type Env = M.Map Variable Int
@@ -35,14 +36,24 @@ instance Applicative StateError where
 
 -- Ejercicio 2.a: Dar una instancia de Monad para StateError:
 instance Monad StateError where
-  return x = undefined
-  m >>= f = undefined
+  return x = State (\s -> Right (x :!: s))
+  m >>= f = State (\s ->  let e = runState m s 
+                          in case e of
+                              (Left err) -> Left err
+                              (Right (v :!: s')) -> Right (runState (f v) s'))
 
 -- Ejercicio 2.b: Dar una instancia de MonadError para StateError:
--- COMPLETAR
+instance MonadError StateError where
+  throw e = State(\s -> Left e)
 
 -- Ejercicio 2.c: Dar una instancia de MonadState para StateError:
--- COMPLETAR
+instance MonadState StateError where
+  lookfor v = State (\s -> lookfor' v s)
+    where lookfor' v s = case M.lookup v s of
+                          Nothing -> Left UndefVar
+                          (Just x) -> Right (x :!: s)
+  update v i = State (\s -> (() :!: update' v i s)) 
+    where update' = M.insert
 
 -- Ejercicio 2.d: Implementar el evaluador utilizando la monada StateError.
 -- Evalua un programa en el estado nulo
