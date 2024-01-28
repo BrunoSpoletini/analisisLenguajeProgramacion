@@ -1,0 +1,54 @@
+Para demostrar que State es una monada, esta debe verificar las siguientes ecuaciones
+
+(monad.1)
+
+    return x >>= f = (def return) = 
+    State (\s -> (x :!: s)) >>= f = (def >>=) =
+    State (\t -> let (v :!: t') = runState (State (\s -> (x :!: s))) t in runState (f v) t') = (def runState) =
+    State (\t -> let (v :!: t') = (\s -> (x :!: s)) t in runState (f v) t') = (B-Redex) =
+    State (\t -> let (v :!: t') = (x :!: t) in runState (f v) t')) =
+    State (\t -> runState (f x) t) = 
+    State (runState (f x)) = (def runState) =
+    f x
+
+(monad.2)
+
+    m >>= return = (def >>=) =
+    State (\s -> let (v :!: s') = runState m s in runState (return v) s') = (def return) =
+    State (\s -> let (v :!: s') = runState m s in runState (State (\t -> (v :!: t))) s') = (def runState) =
+    State (\s -> let (v :!: s') = runState m s in (\t -> (v :!: t)) s') = (B-Redex) =
+    State (\s -> let (v :!: s') = runState m s in (v :!: s')) =
+    State (\s -> runState m s) = 
+    State (runState m) = (def runState) =
+    m
+
+(monad.3)
+
+    (m >>= f) >>= g = (def >>=) =
+    (State (\s -> let (v :!: s′) = runState m s in runState (f v) s′)) >>= g = (def >>=) =
+    State (\t -> let (u :!: t′) = runState (State (\s -> let (v :!: s′) = runState m s in runState (f v) s′)) t in runState (g u) t′) = (def runState) =
+    State (\t -> let (u :!: t′) = (\s -> let (v :!: s′) = runState m s in runState (f v) s′) t in runState (g u) t′) = (B-Redex) =
+    State (\t -> let (u :!: t′) = (let (v :!: s′) = runState m t in runState (f v) s′) in runState (g u) t′)
+
+    m >>= (\x -> f x >>= g) = (def >>=)
+    State (\s -> let (v :!: s') = runState m s in runState ((\x -> f x >>= g) v) s') = (B-Redex) =
+    State (\s -> let (v :!: s') = runState m s in runState (f v >>= g) s') = (def >>=)
+    State (\s -> let (v :!: s') = runState m s in runState (State (\t -> let (u :!: t') = runState (f v) t in runState (g u) t')) s') = (def runState) =
+    State (\s -> let (v :!: s') = runState m s in (\t -> let (u :!: t') = runState (f v) t in runState (g u) t') s') = (B-Redex) =
+    State (\s -> let (v :!: s') = runState m s in let (u :!: t') = runState (f v) s' in runState (g u) t')
+
+
+
+    1: State (\t -> let (u :!: t′) = (let (v :!: s′) = runState m t in runState (f v) s′) in runState (g u) t′)
+    2: State (\s -> let (v :!: s') = runState m s in let (u :!: t') = runState (f v) s' in runState (g u) t')
+
+    Notese que:
+        (v :!: s') en 1 es lo mismo que (v :!: s') en 2
+        (u :!: t') en 1 es lo mismo que (u :!: t') en 2
+
+    Si dejamos solo los in:
+
+    1: State (\t -> runState (g u) t′)
+    2: State (\s -> runState (g u) t')
+
+De esta manera dejamos demostrado que State es una monada
