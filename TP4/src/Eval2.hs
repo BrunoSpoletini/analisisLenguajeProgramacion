@@ -92,7 +92,10 @@ evalExp (UMinus e) = do c <- evalExp e
 evalExp (Plus e1 e2) = opera e1 e2 (+)
 evalExp (Minus e1 e2) = opera e1 e2 (-)
 evalExp (Times e1 e2) = opera e1 e2 (*)
-evalExp (Div e1 e2) = divide e1 e2
+evalExp (Div exp exp') = do
+  r <- evalExp exp
+  t <- evalExp exp'
+  if t == 0 then throw DivByZero else return (r `div` t)
 evalExp BTrue = return True
 evalExp BFalse = return False
 evalExp (Lt e1 e2) = opera e1 e2 (<)
@@ -115,17 +118,3 @@ opera e1 e2 f = do  v1 <- evalExp e1
                     v2 <- evalExp e2
                     return (f v1 v2)
 
-divide :: (MonadState m, MonadError m) => Exp a -> Exp b -> (a -> b -> c) -> m c
-divide e1 e2  = do  v1 <- evalExp e1
-                    v2 <- evalExp e2
-                    case divide' v1 v2 of
-                      Left e -> throw e
-                      Right x -> return x
-
-divide' :: Either Error (Pair a Env) -> Either Error (Pair a Env) -> Either Error (Pair a Env)
-divide' (Left e) _ = Left e
-divide' _ (Left e) = Left e
-divide' (Right x) (Right y) = if y == 0 then
-                                  Left DivByZero
-                                else
-                                  Right (div v1 v2)

@@ -12,7 +12,7 @@ import           Data.Strict.Tuple
 import           Control.Monad                  ( liftM
                                                 , ap
                                                 )
-
+import Data.Either (Either(Right))
 -- Entornos
 type Env = M.Map Variable Int
 
@@ -26,12 +26,21 @@ initEnv = M.empty
 newtype StateErrorTrace a = StateErrorTrace {runStateErrorTrace :: Env -> Either Error (Pair a (Env, Trace))}
 
 -- Recuerde agregar las siguientes instancias para calmar al GHC:
-instance Functor StateErrorCost where
-    fmap = liftM
+instance Functor StateErrorTrace where 
+  fmap = liftM
 
-instance Applicative StateErrorCost where
+instance Applicative StateErrorTrace where
   pure  = return
   (<*>) = ap
+
+instance Monad StateErrorTrace where
+  return x = StateErrorTrace (\s -> Right (x :!: (s, "")))
+  m >>= f =
+    StateErrorTrace
+      (\s -> do
+        (a :!: (e, t)) <- runStateErrorTrace m s
+        (b :!: (e', t')) <- runStateErrorTrace (f a) e
+        return $ b :!: (e', t ++ t'))
 
 -- Ejercicio 3.b: Resolver en Monad.hs
 
